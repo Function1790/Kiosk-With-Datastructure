@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Madimi+One&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "Noto Sans KR", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    box-sizing: border-box;
+}
+
+a {
+    color: black;
+    text-decoration: none;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+}
+
+.root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 4vw;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.whiteboard-wrap {
+    margin-top: 3vw;
+}
+
+.whiteboard {
+    width: 80vw;
+    height: 9vw;
+    border: 2px solid #777;
+    color: #3f3f3f;
+    font-size: 3.5vw;
+    font-weight: 400;
+}
+
+.select-seat-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.seat {
+    margin: 2vw 4vw;
+    width: 10vw;
+    height: 10vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #777;
+    color: #525252;
+    font-size: 4vw;
+    font-weight: 400;
+}
+
+.wait {
+    background-color: #f6ff7a;
+}
+
+.check {
+    background-color: #96ff83;
+}
+
+.sit {
+    background-color: #a9fbff;
+}
+
+.inputWrap {
+    margin-top: 5vw;
+}
+
+input {
+    font-size: 3vw;
+    width: 20vw;
+    padding: 0.5vw 1.5vw;
+}
+
+.input {
+    outline: none;
+    border: none;
+    border-bottom: 2px solid #555;
+    transition: 0.2s;
+}
+
+.inputLine {
+    padding: 0 4vw;
+    display: flex;
+    flex-direction: row;
+}
+
+.inputLine > * {
+    font-size: 3.5vw;
+}
+
+.inputHeader {
+    margin-right: 2vw;
+}
+
+.submit {
+    background-color: transparent;
+    border: 2px solid #555;
+    margin-left: 2vw;
+    width: 12vw;
+    cursor: pointer;
+}
+
+.submit:hover {
+    background-color: #555;
+    color: white;
+}
+
+.seat {
+    flex-direction: column;
+}
+
+.content {
+    font-size: 2vw;
+}
