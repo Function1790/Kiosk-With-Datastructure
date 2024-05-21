@@ -39,6 +39,7 @@ app.use(express.urlencoded({ extended: false }))
 const session = require('express-session')
 const Memorystore = require('memorystore')
 const cookieParser = require("cookie-parser");
+const { send } = require('process');
 app.use(cookieParser('kiosk'))
 
 app.use(session({
@@ -121,13 +122,13 @@ function isCorrectSQLResult(result) {
 //<----------Class---------->
 class Queue {
     constructor() {
-        this._arr = []
+        this.arr = []
     }
-    enqueue(item) {
-        this._arr.push(item)
+    push(item) { // enqueue
+        this.arr.push(item)
     }
-    dequeue() {
-        return this._arr.shift()
+    pop() { // dequeue
+        return this.arr.shift()
     }
 }
 
@@ -144,11 +145,12 @@ class Stack {
 }
 
 class Menu {
-    constructor(title, content, price, count) {
+    constructor(title, content, price, count, time) {
         this.title = title
         this.content = content
         this.price = price
         this.count = count
+        this.time = time
     }
     isSoldout() {
         return this.count == 0
@@ -156,12 +158,14 @@ class Menu {
 }
 //<----------Setting---------->
 const menuList = [
-    new Menu('연어김밥', '맛있는 연어와 김밥의 만남', 7800, 10),
-    new Menu('참치김밥', '참치마요가 들어간 정석 김밥', 4500, 15),
-    new Menu('국수', '따뜻한 멸치국수', 6500, 10),
-    new Menu('돈가스', '맛있는거', 9200, 20),
-    new Menu('음료수', '콜라 | 사이다', 1800, 30),
+    new Menu('연어김밥', '맛있는 연어와 김밥의 만남', 7800, 10, 4),
+    new Menu('참치김밥', '참치마요가 들어간 정석 김밥', 4500, 15, 7),
+    new Menu('국수', '따뜻한 멸치국수', 6500, 10, 8),
+    new Menu('돈까스', '맛있는거', 9200, 20, 9),
+    new Menu('음료수', '콜라 | 사이다', 1800, 30, 1),
 ]
+
+const orderList = new Queue()
 
 
 //TP3
@@ -169,13 +173,13 @@ const menuList = [
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get('/', async (req, res) => {
+app.get('/', async(req, res) => {
     await sendRender(req, res, './views/index.html', {
         index: req.session.index
     })
 })
 
-app.get('/select-seat', async (req, res) => {
+app.get('/select-seat', async(req, res) => {
     var seatHTML = ''
     for (var i = 0; i < 20; i++) {
         seatHTML += `
@@ -196,7 +200,7 @@ app.get('/select-seat-check', (req, res) => {
 })
 
 
-app.get('/order', async (req, res) => {
+app.get('/order', async(req, res) => {
     var menuListHTML = ''
     for (var i in menuList) {
         menuListHTML += `
@@ -217,13 +221,89 @@ app.get('/order', async (req, res) => {
 })
 
 
-app.post('/order-check', async (req, res) => {
+app.post('/order-check', async(req, res) => {
     const body = req.body
+    var order = {}
+    order.userIndex = req.session.index
     for (var i in menuList) {
-        menuList[i].count -= Number(body[`${i}`])
+        var _count = Number(body[`${i}`])
+        if (_count) {
+            order[`${i}`] = {
+                count: _count,
+                time: menuList[i].time * (1 + .4 * (_count - 1)),
+
+            }
+        }
+        menuList[i].count -= _count
     }
+    orderList.push(order)
     res.send(forcedMoveCode('/'))
 })
 
+app.get('/order/show', async(req, res) => {
+    var orderHTML = ''
+    for (var i in orderList.arr) {
+        var _order = orderList.arr[i]
+        var totalTime = 0
+        innerHTML = `
+        <div class="line">
+            <div class="title">${_order.userIndex}번 테이블</div>
+        </div>`
+        for (var i in _order) {
+            if (i == 'userIndex') continue
+            innerHTML += `
+            <div class="line">
+                <div class="column">${menuList[i].title}</div>
+                <div class="column">${_order[i].count}개</div>
+                <div class="column">${_order[i].time}분</div>
+            </div>
+            `
+            totalTime += _order[i].time
+        }
+        orderHTML += `
+        <div class="order">
+            ${innerHTML}
+            <br>
+            <div class="line">${totalTime}분</div>
+        </div>`
+    }
+    await sendRender(req, res, './views/ordershow.html', {
+        orderHTML: orderHTML
+    })
+})
+
+
+app.get('/order/get', async(req, res) => {
+    const now = orderList.arr[0]
+    var orderHTML = ''
+
+    var totalTime = 0
+    innerHTML = `
+        <h1>우선</h1>
+        <div class="line">
+            <div class="title">${now.userIndex}번 테이블</div>
+        </div>`
+    for (var i in now) {
+        if (i == 'userIndex') continue
+        innerHTML += `
+            <div class="line">
+                <div class="column">${menuList[i].title}</div>
+                <div class="column">${now[i].count}개</div>
+                <div class="column">${now[i].time}분</div>
+            </div>
+            `
+        totalTime += now[i].time
+    }
+    orderHTML += `
+        <div class="order">
+            ${innerHTML}
+            <br>
+            <div class="line">${totalTime}분</div>
+        </div>`
+
+    await sendRender(req, res, './views/ordershow.html', {
+        orderHTML: orderHTML
+    })
+})
 
 server.listen(5500, () => console.log('Server run https://127.0.0.1:5500'))

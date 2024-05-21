@@ -1,0 +1,21 @@
+.order {
+    margin: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+}
+
+.line {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+}
+
+.column {
+    width: 120px;
+}
+
+.title {
+    font-size: 25px;
+}
