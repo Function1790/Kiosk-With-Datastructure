@@ -130,6 +130,9 @@ class Queue {
     pop() { // dequeue
         return this.arr.shift()
     }
+    peek() {
+        return this.arr[0]
+    }
 }
 
 class Stack {
@@ -175,6 +178,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.get('/', async(req, res) => {
     await sendRender(req, res, './views/index.html', {
+        header: `남은 주문 ${orderList.arr.length}개`,
         index: req.session.index
     })
 })
@@ -230,8 +234,8 @@ app.post('/order-check', async(req, res) => {
         if (_count) {
             order[`${i}`] = {
                 count: _count,
-                time: menuList[i].time * (1 + .4 * (_count - 1)),
-
+                time: Math.floor(menuList[i].time * (1 + .4 * (_count - 1))),
+                complete: false
             }
         }
         menuList[i].count -= _count
@@ -274,12 +278,12 @@ app.get('/order/show', async(req, res) => {
 
 
 app.get('/order/get', async(req, res) => {
-    const now = orderList.arr[0]
+    var now = orderList.peek()
     var orderHTML = ''
 
     var totalTime = 0
     innerHTML = `
-        <h1>우선</h1>
+        <h1>남은 주문 ${orderList.arr.length}개</h1>
         <div class="line">
             <div class="title">${now.userIndex}번 테이블</div>
         </div>`
@@ -299,11 +303,17 @@ app.get('/order/get', async(req, res) => {
             ${innerHTML}
             <br>
             <div class="line">${totalTime}분</div>
+            <div class="line"><a href="/complete">완성</a></div>
         </div>`
 
     await sendRender(req, res, './views/ordershow.html', {
         orderHTML: orderHTML
     })
+})
+
+app.get('/complete', (req, res) => {
+    orderList.pop()
+    res.send(forcedMoveCode('/order/get'))
 })
 
 server.listen(5500, () => console.log('Server run https://127.0.0.1:5500'))
