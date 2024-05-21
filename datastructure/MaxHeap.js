@@ -1,14 +1,14 @@
 class MaxHeap {
     constructor() {
-        this.heap = [null];
+        this.arr = [null];
     }
 
     swap(a, b) {
-        [this.heap[a], this.heap[b]] = [this.heap[b], this.heap[a]];
+        [this.arr[a], this.arr[b]] = [this.arr[b], this.arr[a]];
     }
 
     size() {
-        return this.heap.length - 1;
+        return this.arr.length - 1;
     }
 
     empty() {
@@ -16,11 +16,11 @@ class MaxHeap {
     }
 
     push(value) {
-        this.heap.push(value);
-        let cur = this.heap.length - 1;
+        this.arr.push(value);
+        let cur = this.arr.length - 1;
         let par = Math.floor(cur / 2);
 
-        while (par > 0 && this.heap[par] < value) {
+        while (par > 0 && this.arr[par] < value) {
             this.swap(cur, par);
             cur = par;
             par = Math.floor(cur / 2);
@@ -32,17 +32,17 @@ class MaxHeap {
             return 0;
         }
         if (this.size() === 1) {
-            return this.heap.pop();
+            return this.arr.pop();
         }
-        let returnValue = this.heap[1];
-        this.heap[1] = this.heap.pop();
+        let returnValue = this.arr[1];
+        this.arr[1] = this.arr.pop();
 
         let cur = 1;
         let left = 2;
         let right = 3;
 
-        while (this.heap[cur] < this.heap[left] || this.heap[cur] < this.heap[right]) {
-            if (this.heap[left] < this.heap[right]) {
+        while (this.arr[cur] < this.arr[left] || this.arr[cur] < this.arr[right]) {
+            if (this.arr[left] < this.arr[right]) {
                 this.swap(cur, right);
                 cur = right;
             } else {

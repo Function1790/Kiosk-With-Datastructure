@@ -9,11 +9,18 @@
 </head>
 
 <body>
+    <div class="home"><a href="/">back</a></div>
     <form action="/order-check" method="post">
+        <div class="category-wrap">
+            <div class="category">
+                <a href="/order">전체</a>
+            </div>
+            {{filterHTML}}
+        </div>
         <div class="menu-wrap">
             {{menuList}}
-            <input class="submit" type="submit" value="제출">
         </div>
+        <input class="submit" type="submit" value="제출">
     </form>
 </body>
 
