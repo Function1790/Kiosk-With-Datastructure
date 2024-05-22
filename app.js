@@ -104,11 +104,14 @@ async function renderFile(req, path, replaceItems = {}) {
 
 /** res.send(renderFile(...)) */
 async function sendRender(req, res, path, replaceItems = {}) {
-    if(!req.session.pathRecord){
-        req.session.pathRecord = new Stack()
+    const sess = req.session
+    if (sess.pathRecord == undefined) {
+        sess.pathRecord = []
+        sess.lastPath = '/'
     }
+    sess.pathRecord.push(sess.lastPath)
+    sess.lastPath = req.route.path
     res.send(await renderFile(req, path, replaceItems))
-    req.session.pathRecord.push(req.session.req.route.path)
 }
 
 
@@ -187,9 +190,12 @@ class Tree {
     }
 }
 
-class MaxHeap {
+
+/** child.time 기준 정렬 | Attr{count, time, complete, rank}*/
+class MinHeap {
     constructor() {
         this.arr = [null];
+        this.lastRank = 1
     }
 
     swap(a, b) {
@@ -204,12 +210,19 @@ class MaxHeap {
         return this.size() === 0;
     }
 
-    push(value) {
-        this.arr.push(value);
+    get length() { return this.arr.length }
+
+    push(item) {
+        this.arr.push(item);
         let cur = this.arr.length - 1;
         let par = Math.floor(cur / 2);
+        if (item.rank == undefined) {
+            item.rank = this.lastRank
+            this.lastRank++
+        }
 
-        while (par > 0 && this.arr[par] < value) {
+        // 부호에 따라 (Max|Min) Heap 결정
+        while (par > 0 && this.arr[par].rank > item.rank) {
             this.swap(cur, par);
             cur = par;
             par = Math.floor(cur / 2);
@@ -229,9 +242,13 @@ class MaxHeap {
         let cur = 1;
         let left = 2;
         let right = 3;
+        print(this.arr)
 
-        while (this.arr[cur] < this.arr[left] || this.arr[cur] < this.arr[right]) {
-            if (this.arr[left] < this.arr[right]) {
+        var arrLeft = this.arr[left] ? this.arr[left].rank : null
+        var arrRight = this.arr[right] ? this.arr[right].rank : null
+        while (this.arr[cur].rank > arrLeft || this.arr[cur].rank > arrRight) {
+            print(cur)
+            if (this.arr[left].rank > this.arr[right].rank) {
                 this.swap(cur, right);
                 cur = right;
             } else {
@@ -244,25 +261,32 @@ class MaxHeap {
 
         return returnValue;
     }
+
+    peek() {
+        if (this.arr.length == 1) {
+            return null
+        }
+        return this.arr[1]
+    }
 }
 //<----------Setting---------->
 const menuList = [
-    new Menu('연어김밥', '맛있는 연어와 김밥의 만남', 7800, 10, 4),
-    new Menu('참치김밥', '참치마요가 들어간 정석 김밥', 4500, 15, 7),
-    new Menu('국수', '따뜻한 멸치국수', 6500, 10, 8),
-    new Menu('돈까스', '맛있는거', 9200, 20, 9),
-    new Menu('우동', '맛있는거', 7500, 20, 5),
-    new Menu('연어초밥', '맛있는거', 9900, 20, 4), // 5
-    new Menu('피자', '맛있는거', 17000, 20, 10),
-    new Menu('파스타', '맛있는거', 12100, 20, 7),
-    new Menu('비빔밥', '맛있는거', 9200, 20, 4),
-    new Menu('불고기', '맛있는거', 10200, 20, 6),
+    new Menu('연어김밥', '맛있는 연어와 김밥의 만남', 7800, 30, 4),
+    new Menu('참치김밥', '참치마요가 들어간 정석 김밥', 4500, 35, 5),
+    new Menu('국수', '따뜻한 멸치국수', 6500, 60, 7),
+    new Menu('돈까스', '맛있는거', 9200, 40, 9),
+    new Menu('우동', '맛있는거', 7500, 50, 5),
+    new Menu('연어초밥', '맛있는거', 9900, 50, 4), // 5
+    new Menu('피자', '맛있는거', 17000, 50, 10),
+    new Menu('파스타', '맛있는거', 12100, 50, 7),
+    new Menu('비빔밥', '맛있는거', 9200, 50, 4),
+    new Menu('불고기', '맛있는거', 10200, 50, 6),
     new Menu('물냉면', '시원하고 맛있는 육수', 8900, 25, 5), // 10
-    new Menu('음료수', '콜라 | 사이다', 1800, 30, 0.5),
+    new Menu('음료수', '콜라 | 사이다', 1800, 100, 0.5),
     new Menu('비빔냉면', '시원하고 맛있는 육수', 8900, 25, 5),
 ]
 
-const orderList = new Queue()
+const orderList = new MinHeap()
 const category = new Tree(null, [
     new Tree('김밥류', [
         menuList[0], menuList[1], menuList[2]
@@ -292,18 +316,18 @@ const category = new Tree(null, [
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get('/', async (req, res) => {
+app.get('/', async(req, res) => {
     await sendRender(req, res, './views/index.html', {
-        header: `남은 주문 ${orderList.arr.length}개`,
+        header: `남은 주문 ${orderList.size()}개`,
         index: req.session.index
     })
 })
 
-app.get('/select-seat', async (req, res) => {
+app.get('/select-seat', async(req, res) => {
     var seatHTML = ''
     for (var i = 0; i < 20; i++) {
         var isSeat = ''
-        for (var j in orderList.arr) {
+        for (var j = 1; j < orderList.length; j++) {
             if (orderList.arr[j].userIndex == `${i}`) {
                 isSeat = 'wait'
                 break
@@ -327,13 +351,13 @@ app.get('/select-seat-check', (req, res) => {
 })
 
 
-app.get('/order', async (req, res) => {
-    var filterIndex = req.query.filter
-    var filterHTML = ''
+app.get('/order', async(req, res) => {
+            var filterIndex = req.query.filter
+            var filterHTML = ''
 
-    for (var i in category.children) {
-        var filterName = category.children[i].value
-        filterHTML += `
+            for (var i in category.children) {
+                var filterName = category.children[i].value
+                filterHTML += `
             <div class="category ${filterIndex ? filterIndex == `${i}` ? 'selected' : '' : ''}">
                 <a href="/order?filter=${i}">${filterName}</a>
             </div>
@@ -356,43 +380,57 @@ app.get('/order', async (req, res) => {
 
 app.post('/order-check', async (req, res) => {
     const body = req.body
-    var order = {}
-    order.userIndex = req.session.index
+    var order = { userIndex: req.session.index }
+    var pre_order = {}
+    var hasPreOrder = false
+
     for (var i in menuList) {
+        if (!body[`${i}`]) continue
         var _count = Number(body[`${i}`])
         if (_count) {
-            order[`${i}`] = {
+            var orderData = {
                 count: _count,
                 time: Math.floor(menuList[i].time * (1 + .4 * (_count - 1))),
                 complete: false
+            }
+            if (i == 11) {
+                pre_order[`${i}`] = orderData
+                hasPreOrder = true
+            } else {
+                order[`${i}`] = orderData
             }
         }
         menuList[i].count -= _count
     }
     orderList.push(order)
+    if (hasPreOrder) {
+        pre_order.userIndex = req.session.index
+        pre_order.rank = 0
+        orderList.push(pre_order)
+    }
     res.send(forcedMoveCode('/'))
 })
 
 app.get('/order/show', async (req, res) => {
     var orderHTML = ''
-    for (var i in orderList.arr) {
+    for (var i = 1; i < orderList.length; i++) {
         var _order = orderList.arr[i]
         var totalTime = 0
         innerHTML = `
         <div class="line">
-            <div class="title">${_order.userIndex}번 테이블</div>
+            <div class="title">${_order.userIndex}번 테이블(rank:${_order.rank})</div>
         </div>`
-        for (var i in _order) {
-            if (i == 'userIndex') continue
+        for (var j in _order) {
+            if (j == 'userIndex' || j == 'rank') continue
             innerHTML += `
             <div class="line">
-                <div class="column">${menuList[i].title}</div>
-                <div class="column">${_order[i].count}개</div>
-                <div class="column">${_order[i].time}분</div>
+                <div class="column">${menuList[j].title}</div>
+                <div class="column">${_order[j].count}개</div>
+                <div class="column">${_order[j].time}분</div>
             </div>
             `
-            totalTime += _order[i].time
-        }
+            totalTime += _order[j].time
+        } i
         orderHTML += `
         <div class="order">
             ${innerHTML}
@@ -419,12 +457,12 @@ app.get('/order/get', async (req, res) => {
 
     var totalTime = 0
     innerHTML = `
-        <h1>남은 주문 ${orderList.arr.length}개</h1>
+        <h1>남은 주문 ${orderList.size()}개</h1>
         <div class="line">
             <div class="title">${now.userIndex}번 테이블</div>
         </div>`
     for (var i in now) {
-        if (i == 'userIndex') continue
+        if (i == 'userIndex' || i == 'rank') continue
         innerHTML += `
             <div class="line">
                 <div class="column">${menuList[i].title}</div>
