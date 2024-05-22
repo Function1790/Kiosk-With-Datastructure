@@ -1,3 +1,4 @@
+
 const express = require('express')
 const app = express()
 const fs = require('fs')
@@ -242,13 +243,15 @@ class MinHeap {
         let cur = 1;
         let left = 2;
         let right = 3;
-        print(this.arr)
+        //print(this.arr)
 
-        var arrLeft = this.arr[left] ? this.arr[left].rank : null
-        var arrRight = this.arr[right] ? this.arr[right].rank : null
+        var arrLeft = this.arr[left] ? this.arr[left].rank : undefined
+        var arrRight = this.arr[right] ? this.arr[right].rank : undefined
         while (this.arr[cur].rank > arrLeft || this.arr[cur].rank > arrRight) {
-            print(cur)
-            if (this.arr[left].rank > this.arr[right].rank) {
+            if (!this.arr[left] && !this.arr[right]) {
+                break
+            }
+            if (this.arr[left]?.rank > this.arr[right]?.rank) {
                 this.swap(cur, right);
                 cur = right;
             } else {
@@ -310,20 +313,56 @@ const category = new Tree(null, [
         menuList[10], menuList[12]
     ])
 ])
+orderList.push({
+    11: {
+        count: 1,
+        time: 1,
+        complete: false
+    },
+    rank: 0,
+    userIndex: 0
+})
+orderList.push({
+    5: {
+        count: 1,
+        time: 1,
+        complete: false
+    },
+    rank: 1,
+    userIndex: 0
+})
+orderList.push({
+    11: {
+        count: 2,
+        time: 1,
+        complete: false
+    },
+    rank: 0,
+    userIndex: 1
+})
+orderList.push({
+    8: {
+        count: 1,
+        time: 1,
+        complete: false
+    },
+    rank: 2,
+    userIndex: 1
+})
 
 //TP3
 //<----------Server---------->
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get('/', async(req, res) => {
+app.get('/', async (req, res) => {
     await sendRender(req, res, './views/index.html', {
         header: `남은 주문 ${orderList.size()}개`,
         index: req.session.index
     })
 })
 
-app.get('/select-seat', async(req, res) => {
+app.get('/select-seat', async (req, res) => {
     var seatHTML = ''
     for (var i = 0; i < 20; i++) {
         var isSeat = ''
@@ -351,13 +390,13 @@ app.get('/select-seat-check', (req, res) => {
 })
 
 
-app.get('/order', async(req, res) => {
-            var filterIndex = req.query.filter
-            var filterHTML = ''
+app.get('/order', async (req, res) => {
+    var filterIndex = req.query.filter
+    var filterHTML = ''
 
-            for (var i in category.children) {
-                var filterName = category.children[i].value
-                filterHTML += `
+    for (var i in category.children) {
+        var filterName = category.children[i].value
+        filterHTML += `
             <div class="category ${filterIndex ? filterIndex == `${i}` ? 'selected' : '' : ''}">
                 <a href="/order?filter=${i}">${filterName}</a>
             </div>

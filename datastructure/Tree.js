@@ -1,5 +1,3 @@
-floor()
-
 //Base
 class Tree {
     constructor(value = null, children = [null]) {
