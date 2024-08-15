@@ -318,7 +318,7 @@ const category = new Tree(null, [
         menuList[10], menuList[12]
     ])
 ])
-orderList.push({
+/*orderList.push({
     11: {
         count: 1,
         time: 1,
@@ -353,7 +353,7 @@ orderList.push({
     },
     rank: 2,
     userIndex: 1
-})
+})*/
 
 //TP3
 //<----------Server---------->

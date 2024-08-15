@@ -20,3 +20,14 @@
 .title {
     font-size: 25px;
 }
+
+.line > a{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: orange;
+    color: white;
+    font-weight: 700;
+    width: 60px;
+    height: 40px;
+}
