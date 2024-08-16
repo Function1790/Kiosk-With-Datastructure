@@ -272,6 +272,62 @@ class MinHeap {
         return this.arr[1]
     }
 }
+
+
+// Trie
+class Trie {
+    constructor() {
+        this.root = {};
+    }
+
+    insert(word) {
+        let current = this.root;
+        for (let char of word) {
+            if (!(char in current)) {
+                current[char] = {};
+            }
+            current = current[char];
+        }
+        current['*'] = 1;
+    }
+
+    search(word) {
+        let current = this.root;
+        for (let char of word) {
+            if (!(char in current)) {
+                return null;
+            }
+            current = current[char];
+        }
+        return current;
+    }
+
+    autoComplete(prefix) {
+        const nextWords = this.search(prefix);
+        if (nextWords === null) {
+            return [];
+        }
+        return this.joinNextWords(prefix, nextWords);
+    }
+
+    joinNextWords(prefix, nextWords) {
+        const result = [];
+        for (let i in nextWords) {
+            if (i === '*') {
+                result.push(prefix);
+                continue;
+            }
+            for (let j of this.joinNextWords(prefix + i, nextWords[i])) {
+                result.push(j);
+            }
+        }
+        return result;
+    }
+}
+
+// Trie 객체 생성
+const trie = new Trie();
+
 //<----------Setting---------->
 //메뉴의 종류
 const menuList = [
@@ -291,6 +347,10 @@ const menuList = [
     new Menu('음료수', '콜라 | 사이다', 1800, 100, 0.5),
     new Menu('비빔냉면', '시원하고 맛있는 육수', 8900, 25, 5),
 ]
+
+for (var i in menuList) {
+    trie.insert(menuList[i].title) // 메뉴 추가
+}
 
 //주문 저장 리스트(배열), 최소힙 사용
 const orderList = new MinHeap();
@@ -318,42 +378,6 @@ const category = new Tree(null, [
         menuList[10], menuList[12]
     ])
 ])
-/*orderList.push({
-    11: {
-        count: 1,
-        time: 1,
-        complete: false
-    },
-    rank: 0,
-    userIndex: 0
-})
-orderList.push({
-    5: {
-        count: 1,
-        time: 1,
-        complete: false
-    },
-    rank: 1,
-    userIndex: 0
-})
-orderList.push({
-    11: {
-        count: 2,
-        time: 1,
-        complete: false
-    },
-    rank: 0,
-    userIndex: 1
-})
-orderList.push({
-    8: {
-        count: 1,
-        time: 1,
-        complete: false
-    },
-    rank: 2,
-    userIndex: 1
-})*/
 
 //TP3
 //<----------Server---------->
@@ -532,6 +556,15 @@ app.get('/order/get', async (req, res) => {
 app.get('/complete', (req, res) => {
     orderList.pop()
     res.send(forcedMoveCode('/order/get'))
+})
+
+app.get('/search', async (req, res) => {
+    await sendRender(req, res, './views/search.html')
+})
+
+app.post('/autocomplete', (req, res) => {
+    const searchWord = req.body.search
+    res.json({ "words": trie.autoComplete(searchWord) })
 })
 
 server.listen(5500, () => console.log('Server run https://127.0.0.1:5500'))

@@ -1,3 +1,4 @@
+// Trie
 class Trie {
     constructor() {
         this.root = {};
